@@ -16,7 +16,8 @@
 *.zip
 
 # Raw inputs (large / private); keep locally only
-inputs/
+inputs/*
+!inputs/layout_v2.png
 
 # Third-party checkouts and generated outputs
 external/
