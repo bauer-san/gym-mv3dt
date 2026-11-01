@@ -43,9 +43,8 @@ apps/courttrack/ct_replay
 experiments/*
 !experiments/.gitkeep
 
-# Images of people: ground-truth crops and frames from the game video stay local
+# Images of people: ground-truth crops stay local (published video frames are sanitized first)
 gt/*/sprites/
-reports/figures/fl_calibration_before_after.jpg
 
 # Downloaded models (RTMPose etc.)
 models/

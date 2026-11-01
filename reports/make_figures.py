@@ -4,12 +4,13 @@
 """
 
 import re
-import shutil
 from pathlib import Path
 
+import cv2
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import numpy as np
 
 HERE = Path(__file__).resolve().parent
 FIG = HERE / "figures"
@@ -82,11 +83,37 @@ def loss_breakdown() -> None:
     fig.savefig(FIG / "loss_breakdown.png", dpi=150, facecolor=SURFACE)
 
 
+def calibration_figure(src: Path) -> None:
+    """FL before/after calibration overlays (two 1620 x 460 halves of the same frame), sanitized for publishing:
+    the crowd and baseline lettering above the court, the lane sponsor text and the centre logo are pixelated,
+    then the overlay pixels (yellow, magenta lines and captions) are put back on top."""
+    img = cv2.imread(str(src))
+    half = np.zeros(img.shape[:2], np.uint8)[:460]
+    cv2.fillPoly(half, [np.array([(0, 0), (1620, 0), (1620, 215), (1490, 125), (1050, 108), (600, 85),
+                                  (110, 72), (0, 135)])], 1)                       # above the court: crowd, lettering
+    cv2.fillPoly(half, [np.array([(270, 460), (320, 325), (560, 305), (780, 295), (1010, 315),
+                                  (1250, 460)])], 1)                               # centre logo
+    text = np.zeros_like(half)
+    cv2.rectangle(text, (630, 176), (895, 212), 1, -1)                             # lane sponsor text
+    text = np.vstack([text, text]).astype(bool)
+    mask = np.vstack([half, half]).astype(bool) | text
+    b, g, r = (img[..., i].astype(int) for i in range(3))
+    yellow = (r > 140) & (g > 140) & (b < g - 70)
+    magenta = (r > 150) & (b > 110) & (g < r - 80) & ~text                          # pink lettering on the lane
+    overlay = yellow | magenta
+    overlay = cv2.dilate(overlay.astype(np.uint8), np.ones((3, 3), np.uint8)).astype(bool)
+    small = cv2.resize(img, (img.shape[1] // 18, img.shape[0] // 18), interpolation=cv2.INTER_AREA)
+    px = cv2.resize(small, img.shape[1::-1], interpolation=cv2.INTER_NEAREST)
+    m = mask & ~overlay
+    img[m] = px[m]
+    cv2.imwrite(str(FIG / "fl_calibration_before_after.jpg"), img, [cv2.IMWRITE_JPEG_QUALITY, 90])
+
+
 if __name__ == "__main__":
     FIG.mkdir(exist_ok=True)
     idf1_by_config()
     loss_breakdown()
     src = HERE.parent / "experiments" / "calib_refine" / "FL_compare.jpg"
     if src.exists():
-        shutil.copy(src, FIG / "fl_calibration_before_after.jpg")
+        calibration_figure(src)
     print(sorted(p.name for p in FIG.iterdir()))
