@@ -1,0 +1,44 @@
+# Publish the phase 7 report (and the figures it shows) to GitHub Pages; nothing else in the repository is served.
+name: Publish report
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - reports/phase7_report.html
+      - reports/figures/**
+      - .github/workflows/pages.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assemble site
+        run: |
+          mkdir -p site/reports
+          cp -r reports/phase7_report.html reports/figures site/reports/
+          cat > site/index.html <<'EOF'
+          <!doctype html><meta charset="utf-8"><title>Phase 7 report</title>
+          <meta http-equiv="refresh" content="0; url=reports/phase7_report.html">
+          <a href="reports/phase7_report.html">Phase 7 report</a>
+          EOF
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@v4
