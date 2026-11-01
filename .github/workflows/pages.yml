@@ -1,4 +1,5 @@
 # Publish the phase 7 report (and the figures it shows) to GitHub Pages; nothing else in the repository is served.
+# The example clip comes from the "media" release (videos are not committed); rerun by hand after replacing it.
 name: Publish report
 
 on:
@@ -36,6 +37,10 @@ jobs:
           <meta http-equiv="refresh" content="0; url=reports/phase7_report.html">
           <a href="reports/phase7_report.html">Phase 7 report</a>
           EOF
+      - name: Fetch the example clip (release asset; videos stay out of git)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release download media --repo ${{ github.repository }} -p example_clip.mp4 -D site/reports/figures
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

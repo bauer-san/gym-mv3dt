@@ -1,7 +1,8 @@
 """Build the web page version of the Phase 7 report (reports/phase7_report.html) from phase7_report.md.
 
-The two bar charts are drawn as inline SVG from the result tables (theme-aware, hover tooltips); the court heat map
-and the FL calibration photo are published next to the page (figures/...). The interactive interface matrix in
+The two bar charts are drawn as inline SVG from the result tables (theme-aware, hover tooltips); the court heat map,
+the FL calibration photo and the example clip are published next to the page (figures/...; the clip
+is a release asset, as videos stay out of git). The interactive interface matrix in
 section 3 comes from reports/interface_matrix.py.
 
   python3 reports/build_page.py
@@ -75,6 +76,12 @@ def loss_chart() -> str:
                    f"2 minutes. The remaining {correct:.1f} % are correct.", "Where identity IDF1 is still lost", False)
 
 
+def video(src: str, poster: str, alt: str, caption: str) -> str:
+    return (f'<figure class="fig plate"><video controls muted playsinline preload="metadata" poster="{poster}" '
+            f'aria-label="{html.escape(alt)}"><source src="{src}" type="video/mp4"></video>'
+            f'<figcaption>{caption}</figcaption></figure>')
+
+
 def photo(src: str, alt: str, caption: str) -> str:
     return (f'<figure class="fig plate"><img src="{src}" alt="{html.escape(alt)}" loading="lazy">'
             f'<figcaption>{caption}</figcaption></figure>')
@@ -135,7 +142,7 @@ th { font: 600 13px/1.3 var(--body); letter-spacing: .06em; text-transform: uppe
 tr:last-child td { border-bottom: 0; }
 .fig { margin: 1.6em 0; max-width: 100%; width: min(920px, 100%); }
 .fig figcaption { color: var(--muted); font-size: 14px; margin-top: 8px; max-width: 70ch; }
-.plate img { display: block; width: 100%; height: auto; background: var(--plate); border: 1px solid var(--rule); border-radius: 6px; }
+.plate img, .plate video { display: block; width: 100%; height: auto; background: var(--plate); border: 1px solid var(--rule); border-radius: 6px; }
 svg.chart { width: 100%; height: auto; display: block; background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; }
 svg.chart text { font-family: var(--body); font-size: 14px; fill: var(--fg); }
 svg.chart .tick { fill: var(--muted); font-size: 12px; }
@@ -178,6 +185,14 @@ def main() -> None:
     body = markdown.markdown(md, extensions=["tables", "fenced_code", "toc"])
     body = body.replace("<table>", '<div class="tbl"><table>').replace("</table>", "</table></div>")
     figs = {
+        "figures/example_clip.mp4": video("figures/example_clip.mp4", "figures/example_clip.jpg",
+                                          "Example of the live output: four camera views and the top-down court",
+                                          "Example of the output: game time 2:20-2:50 (a labelled minute), run up_r1, "
+                                          "as the pipeline delivered it live. Four camera views and the top-down court; "
+                                          "each player is labelled by team (A maroon, B red) and jersey number, white "
+                                          "boxes have no identity yet. At the labelled moment (2:44) a strip shows how "
+                                          "many labels are right. The crowd, walls, floor lettering and every head are "
+                                          "pixelated (<code>tools/render_labels.py --live --sanitize</code>)."),
         "figures/idf1_by_config.png": idf1_chart(),
         "figures/loss_breakdown.png": loss_chart(),
         "figures/court_heatmap.png": photo("figures/court_heatmap.png", "Court heat maps of track events",

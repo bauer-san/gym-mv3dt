@@ -14,6 +14,8 @@ without the court tracker; the court tracker's Python reference was run on their
 `scripts/phase8_reevaluate.sh`. Comparisons made before the pose model was turned off (sections 2.4, 4.8, 6.1) keep
 their earlier runs, and say so.
 
+![Example: 30 s of live output](figures/example_clip.mp4)
+
 ## 1. Summary
 
 **Recommendation.** Use DeepStream for detection, per-camera tracking and jersey reading, on time-aligned camera
